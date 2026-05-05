@@ -1,0 +1,56 @@
+name: Build Masscan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-linux-64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Masscan Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'robertdavidgraham/masscan'
+          ref: 'master'
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make libpcap-dev
+
+      - name: Compile
+        run: make -j$(nproc)
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: masscan-linux-amd64
+          path: bin/masscan
+
+  build-windows-64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout Masscan Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'robertdavidgraham/masscan'
+          ref: 'master'
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: git make mingw-w64-x86_64-gcc
+
+      - name: Compile
+        run: make -j4
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: masscan-windows-amd64
+          path: bin/masscan.exe
